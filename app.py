@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 from google import genai
-from google.genai import errors
+from google.genai import errors, types
 from personalities import PERSONALITIES
 from prompts import LANGUAGES, build_personality_prompt
 from utils import load_style, render_sidebar
@@ -54,39 +54,73 @@ else:
         PERSONALITIES, LANGUAGES
     )
 
-    with st.form("chat_form"):
-        st.subheader("Type Message")
-        user_message = st.text_area("Your message", placeholder="Ask anything to the selected persona...", height=140)
-        send_button = st.form_submit_button("SEND TO THE MULTIVERSE")
+    # Task 1: Initialize the Memory Vault
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    if send_button:
-        if not user_message.strip():
-            st.warning("Please type a message before sending.")
-        else:
-            prompt_preview = build_personality_prompt(
-                personality_name, personality_description, personality_behavior, language, user_message
-            )
+    # Task 2: Render the Chat History
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Task 3: Upgrade the Input UI
+    if user_message := st.chat_input("Say something..."):
+        # Display the user message on the screen immediately
+        with st.chat_message("user"):
+            st.markdown(user_message)
+        
+        # Task 4: Save User Message to Memory
+        st.session_state.messages.append({"role": "user", "content": user_message})
+
+        # Construct the system instruction for the current personality
+        system_instruction = (
+            f"System Directive:\n"
+            f"You are acting as the persona described below. Your response must stay in-character, follow the specified style and guidelines, and be written in the specified language.\n\n"
+            f"--- Persona Profile ---\n"
+            f"Name: {personality_name}\n"
+            f"Description: {personality_description}\n"
+            f"Behavior Guidelines: {personality_behavior}\n"
+            f"Response Language: {language}"
+        )
+        
+        # Build prompt preview for debugging and transparency
+        prompt_preview = (
+            f"=== System Instruction ===\n{system_instruction}\n\n"
+            f"=== User Message ===\n{user_message}"
+        )
+        
+        # Show the generated prompt inside an expander for debugging/transparency
+        with st.expander("🛠️ View Built Prompt Profile", expanded=False):
+            st.code(prompt_preview)
             
-            # Show the generated prompt inside an expander for debugging/transparency
-            with st.expander("🛠️ View Built Prompt Profile", expanded=False):
-                st.code(prompt_preview)
+        with st.spinner("🌌 Channeling the Multiverse..."):
+            try:
+                # Initialize the Gemini client
+                client = genai.Client(api_key=api_key)
                 
-            with st.spinner("🌌 Channeling the Multiverse..."):
-                try:
-                    # Initialize the Gemini client
-                    client = genai.Client(api_key=api_key)
-                    
-                    # Generate the response
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash",
-                        contents=prompt_preview,
+                # Convert session state messages to Gemini format (user/model roles)
+                contents = []
+                for msg in st.session_state.messages:
+                    role = "user" if msg["role"] == "user" else "model"
+                    contents.append(types.Content(role=role, parts=[types.Part(text=msg["content"])]))
+                
+                # Generate the response
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction
                     )
-                    
-                    st.markdown("### 🌌 Response")
+                )
+                
+                # Display assistant response
+                with st.chat_message("assistant"):
                     st.markdown(response.text)
-                    st.success("Response generated successfully!")
-                    
-                except errors.APIError as e:
-                    st.error(f"Gemini API Error: {e.message}")
-                except Exception as e:
-                    st.error(f"An unexpected error occurred: {str(e)}")
+                
+                # Save assistant response to Memory
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+                
+            except errors.APIError as e:
+                st.error(f"Gemini API Error: {e.message}")
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {str(e)}")

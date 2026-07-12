@@ -15,6 +15,8 @@ AI Multiverse Chat Studio is a premium, interactive Streamlit web application th
   - 🦇 **Batman** / 🤡 **Joker** / ⚔️ **Deadpool** / 🦊 **Naruto** / 🐉 **Goku**
   - 🌸 **Zen Master** / 📋 **Strict Interviewer** / 📣 **Motivational Coach** ... and more!
 - **Multilingual Support**: Choose to have the personas reply in English, Spanish, French, German, Portuguese, Hindi, Japanese, or Mandarin.
+- **Stateful Memory Vault**: Seamless conversational context retention across turns using `st.session_state`. The chatbot remembers previous messages even when switching parameters or selected personas.
+- **Native Chat UI**: Modern, interactive chat flow using Streamlit's native `st.chat_input` (with the walrus operator) and `st.chat_message` containers.
 - **Prompt Inspector**: Dynamically inspect the structured system directive and profile instructions sent to Gemini before calling the API.
 - **Premium Aesthetics**: Customized modern UI styling with vibrant glassmorphic gradients, clean typography, and a polished dashboard.
 
