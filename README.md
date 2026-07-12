@@ -4,6 +4,18 @@ AI Multiverse Chat Studio is a premium, interactive Streamlit web application th
 
 ---
 
+## 📸 Preview & Demo
+
+Here is a preview of the stateful chatbot interface:
+
+![Chat Studio Preview](chatbot_screenshot.png)
+
+*And here is a demonstration of a continuous 3-message conversation with active memory vault retention:*
+
+![Chat Studio Demo](chatbot_demo.webp)
+
+---
+
 ## 🌌 Features
 
 - **15+ Tailored AI Personas**: Interact with iconic characters, visionaries, and specialized coaches, including:
